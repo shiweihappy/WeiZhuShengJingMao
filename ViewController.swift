@@ -8,10 +8,16 @@
 
 import UIKit
 
+let ROW = 9
+let COL = 9
+
 class ViewController: UIViewController {
 
     var allBtnArray = [[UIButton]]()
     var allBtnState = [[Int]]()
+    var allCircleLoc = [[CircleLocation]]()
+    var catImageView = UIImageView()
+    var catCircle:CircleLocation!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,11 +30,25 @@ class ViewController: UIViewController {
         addAllBtns()
         addCat()
         addGameLevel()
+        addAllCircleLocation()
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
+    }
+    
+    func addAllCircleLocation() {
+        for i in 0..<ROW {
+            var rowCircleLoc = [CircleLocation]()
+            for j in 0..<COL {
+                var loc = CircleLocation(row: i, col: j)
+                rowCircleLoc.append(loc)
+                loc.state = allBtnState[i][j]
+            }
+            
+            allCircleLoc.append(rowCircleLoc)
+        }
     }
     
     func addGameLevel() {
@@ -46,7 +66,6 @@ class ViewController: UIViewController {
     }
 
     func addCat() {
-        var catImageView = UIImageView()
         catImageView.frame = CGRectMake((CGFloat)(20 + 28 * 4), (CGFloat)(170 + 28 * 3), 28, 56)
         var img1 = UIImage(named: "left2.png")
         var img2 = UIImage(named: "middle2.png")
@@ -55,14 +74,16 @@ class ViewController: UIViewController {
         catImageView.animationDuration = 1.0
         catImageView.startAnimating()
         self.view.addSubview(catImageView)
-        allBtnState[4][3] = 1
+        allBtnState[4][4] = 1
+        catCircle = CircleLocation(row: 4, col: 4)
+        catCircle.state = 0
     }
     
     func addAllBtns() {
-        for i in 0..<9 {
+        for i in 0..<ROW {
             var rowBtn = [UIButton]()
             var rowBtnState = [Int]()
-            for j in 0..<9 {
+            for j in 0..<COL {
                 var btn = UIButton()
                 if i % 2 == 0 {
                     btn.frame = CGRectMake((CGFloat)(20 + 28 * j), (CGFloat)(170 + 28 * i), 28, 28)
@@ -83,7 +104,51 @@ class ViewController: UIViewController {
     
     func clickBtn(sender:UIButton) {
         sender.setImage(UIImage(named: "yellow2.png"), forState: UIControlState.Normal)
+        var clickRow = getClickBtnRow(sender)
+        var clickCol = getClickBtnCol(sender)
+        allBtnState[clickRow][clickCol] = 1
+        allCircleLoc[clickRow][clickCol].state = allBtnState[clickRow][clickCol]
+        catMove()
     }
+    
+    func catMove() {
+        var circle = allCircleLoc[catCircle.row][catCircle.col]
+        var tempArr = circle.getAllCircles(allCircleLoc)
+        
+        if tempArr.count > 0 {
+            var selectCircle = tempArr[0]
+            catCircle.row = selectCircle.row
+            catCircle.col = selectCircle.col
+            catCircle.state = selectCircle.state
+        }
+        
+        if catCircle.row % 2 == 0 {
+            catImageView.frame = CGRectMake((CGFloat)(20 + 28 * catCircle.col), (CGFloat)(170 + 28 * (catCircle.row - 1)), 28, 56)
+        } else {
+            catImageView.frame = CGRectMake((CGFloat)(20 + 28 * catCircle.col + 14), (CGFloat)(170 + 28 * (catCircle.row - 1)), 28, 56)
+        }
+    }
+    
+    func getClickBtnRow(btn:UIButton) -> Int {
+        let y = Int(btn.frame.origin.y)
+        let row = (y - 170)/28;
+        return row;
+    }
+    
+    func getClickBtnCol(btn:UIButton) -> Int {
+        var row = getClickBtnRow(btn)
+        let x = Int(btn.frame.origin.x)
+        var col = 0
+        if row % 2 == 0 {
+            col = (x - 20) / 28
+        } else {
+            col = (x - 34) / 28
+        }
+        
+        return col
+    }
+    
+    
 
 }
 
