@@ -18,6 +18,7 @@ class ViewController: UIViewController {
     var allCircleLoc = [[CircleLocation]]()
     var catImageView = UIImageView()
     var catCircle:CircleLocation!
+    var totleNum = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -108,24 +109,73 @@ class ViewController: UIViewController {
         var clickCol = getClickBtnCol(sender)
         allBtnState[clickRow][clickCol] = 1
         allCircleLoc[clickRow][clickCol].state = allBtnState[clickRow][clickCol]
+        totleNum++
         catMove()
     }
     
     func catMove() {
+        getBestLocation()
+        if catCircle.row % 2 == 0 {
+            catImageView.frame = CGRectMake((CGFloat)(20 + 28 * catCircle.col), (CGFloat)(170 + 28 * (catCircle.row - 1)), 28, 56)
+        } else {
+            catImageView.frame = CGRectMake((CGFloat)(20 + 28 * catCircle.col + 14), (CGFloat)(170 + 28 * (catCircle.row - 1)), 28, 56)
+        }
+    }
+    
+    func getBestLocation() {
+        calculateAllCost()
+        
         var circle = allCircleLoc[catCircle.row][catCircle.col]
         var tempArr = circle.getAllCircles(allCircleLoc)
         
         if tempArr.count > 0 {
             var selectCircle = tempArr[0]
+            for temp in tempArr {
+                if temp.isBoundary() {
+                    println("You lose")
+                    loseAlert()
+                    return
+                }
+                if selectCircle.isLess(temp) {
+                    continue
+                } else {
+                    selectCircle = temp
+                }
+            }
+            
             catCircle.row = selectCircle.row
             catCircle.col = selectCircle.col
             catCircle.state = selectCircle.state
+        } else {
+            if catCircle.isBoundary() {
+                println("You lose")
+                loseAlert()
+            } else {
+                println("You win")
+                winAlert()
+            }
+        }
+    }
+    
+    func calculateAllCost() {
+        clearAllCost()
+        
+        for i in 0 ..< ROW {
+            for j in 0 ..< COL {
+                var circle = allCircleLoc[i][j]
+                circle.calculateCost(allCircleLoc)
+                println("\(i) and \(j) cost = \(circle.cost)")
+            }
         }
         
-        if catCircle.row % 2 == 0 {
-            catImageView.frame = CGRectMake((CGFloat)(20 + 28 * catCircle.col), (CGFloat)(170 + 28 * (catCircle.row - 1)), 28, 56)
-        } else {
-            catImageView.frame = CGRectMake((CGFloat)(20 + 28 * catCircle.col + 14), (CGFloat)(170 + 28 * (catCircle.row - 1)), 28, 56)
+    }
+    
+    func clearAllCost() {
+        for i in 0 ..< ROW {
+            for j in 0 ..< COL {
+                var circle = allCircleLoc[i][j]
+                circle.cost = -100
+            }
         }
     }
     
@@ -148,7 +198,46 @@ class ViewController: UIViewController {
         return col
     }
     
+    func runAgain() {
+        totleNum = 0
+        for i in 0 ..< ROW {
+            for j in 0 ..< COL {
+                allBtnArray[i][j].setImage(UIImage(named: "gray.png"), forState: UIControlState.Normal)
+                allBtnState[i][j] = 0
+            }
+        }
+        
+        allBtnState[4][4] = 1
+        catImageView.frame = CGRectMake((CGFloat)(20 + 28 * 4), (CGFloat)(170 + 28 * 3), 28, 56)
+        catCircle.row = 4
+        catCircle.col = 4
+        catCircle.state = 0
+        
+        addGameLevel()
+        for i in 0..<ROW {
+            for j in 0 ..< COL {
+                allCircleLoc[i][j].state = allBtnState[i][j]
+            }
+        }
+    }
     
+    func winAlert() {
+        var alert = UIAlertController(title: "You Win!", message: "你围住了神经猫，总共是\(totleNum)步", preferredStyle: UIAlertControllerStyle.Alert)
+        var actionOk = UIAlertAction(title: "退出游戏", style: UIAlertActionStyle.Default, handler: {act in exit(-1)})
+        var actionCancle = UIAlertAction(title: "重新开始", style: UIAlertActionStyle.Default, handler: {act in self.runAgain()})
+        alert.addAction(actionOk)
+        alert.addAction(actionCancle)
+        self.presentViewController(alert, animated: true, completion: nil)
+    }
+    
+    func loseAlert() {
+        var alert = UIAlertController(title: "You losw!", message: "小猫跑掉了", preferredStyle: UIAlertControllerStyle.Alert)
+        var actionOk = UIAlertAction(title: "again?", style: UIAlertActionStyle.Default, handler: {act in self.runAgain()})
+        var actionNo = UIAlertAction(title: "give up", style: UIAlertActionStyle.Default, handler: {act in exit(-1)})
+        alert.addAction(actionOk)
+        alert.addAction(actionNo)
+        self.presentViewController(alert, animated: true, completion: nil)
+    }
 
 }
 

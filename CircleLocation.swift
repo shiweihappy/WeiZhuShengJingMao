@@ -157,6 +157,36 @@ class CircleLocation {
         return arr;
     }
     
+    func isBoundary() -> Bool {
+        if self.row == 0 || (self.row == ROW - 1) || (self.col == 0) || (self.col == COL - 1) {
+            return true
+        }
+        
+        return false
+    }
+    
+    func calculateCost(array: [[CircleLocation]]) {
+        if isBoundary() {
+            self.cost = 0
+            return
+        }
+        
+        if self.state == 1 {
+            self.cost = 100
+            return
+        }
+        
+        var allCircles = getAllCircles(array)
+        self.cost = allCircles.count
+    }
+    
+    func isLess(circle:CircleLocation) -> Bool {
+        if self.cost < circle.cost {
+            return true
+        } else {
+            return false
+        }
+    }
     
 }
 
